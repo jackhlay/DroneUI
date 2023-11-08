@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class View {
+    //Build the gui
     private JFrame frame;
     private JPanel topText, takeoffFields, LLfields, midText, centerPanel;
     private JLabel takeoffLabel, addLabel, toLat, toLong, additLat, additLong;
@@ -46,7 +47,6 @@ public class View {
         takeoffFields.add(takeoffLat);
         takeoffFields.add(toLong);
         takeoffFields.add(takeoffLong);
-        takeoffFields.add(generatePlan);
 
         //adding fields for additional points to additional Points Panel
         LLfields.add(additLat);
@@ -62,6 +62,7 @@ public class View {
         centerPanel.add(midText);
         centerPanel.add(addLabel);
         centerPanel.add(LLfields);
+        centerPanel.add(generatePlan);
 
         //adding final panel to window
         frame.add(topText, BorderLayout.NORTH);
