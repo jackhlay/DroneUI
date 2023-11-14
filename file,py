@@ -1,1 +1,64 @@
-print("bruh")
+import tkinter as tk
+
+class Model:
+    def __init__(self):
+        self.coordinates = []
+
+    def add_coordinate(self, latitude, longitude):
+        self.coordinates.append((latitude, longitude))
+
+    def generate_plan(self):
+        # Add your plan generation logic here
+        print("Generating plan with coordinates:", self.coordinates)
+
+
+class View:
+    def __init__(self, root, controller):
+        self.root = root
+        self.root.title("Coordinate App")
+
+        self.latitude_label = tk.Label(root, text="Latitude:")
+        self.latitude_label.grid(row=0, column=0)
+
+        self.longitude_label = tk.Label(root, text="Longitude:")
+        self.longitude_label.grid(row=1, column=0)
+
+        self.latitude_entry = tk.Entry(root)
+        self.latitude_entry.grid(row=0, column=1)
+
+        self.longitude_entry = tk.Entry(root)
+        self.longitude_entry.grid(row=1, column=1)
+
+        self.add_button = tk.Button(root, text="Add Coordinates", command=controller.add_coordinates)
+        self.add_button.grid(row=2, column=0, columnspan=2)
+
+        self.result_label = tk.Label(root, text="")
+        self.result_label.grid(row=3, column=0, columnspan=2)
+
+        self.generate_button = tk.Button(root, text="Generate Plan", command=controller.generate_plan)
+        self.generate_button.grid(row=4, column=0, columnspan=2)
+
+
+class Controller:
+    def __init__(self, root):
+        self.model = Model()
+        self.view = View(root, self)
+
+    def add_coordinates(self):
+        latitude = self.view.latitude_entry.get()
+        longitude = self.view.longitude_entry.get()
+
+        if latitude and longitude:
+            self.model.add_coordinate(latitude, longitude)
+            self.view.result_label.config(text="Coordinates added successfully.")
+        else:
+            self.view.result_label.config(text="Please enter both latitude and longitude.")
+
+    def generate_plan(self):
+        self.model.generate_plan()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = Controller(root)
+    root.mainloop()
