@@ -14,10 +14,13 @@ def get_distance_global(current_lat, current_lon, target_lat, target_lon):
 
 
 def connect(port):
-    connection = mavutil.mavlink_connection('udpin:0.0.0.0:14551') 
+    print("Attempting to connect on port %d" % port)
+
+    connection = mavutil.mavlink_connection('udpin:localhost:%d' % port) 
 
     connection.wait_heartbeat() #wait until we hear a heartbeat from the copter
 
+    print("Connection success")
     print("Heartbeat from system (system %u component %u)" % (connection.target_system, connection.target_component))
 
     return connection 
@@ -82,21 +85,24 @@ def send_waypoint_global(connection, lat, lon, alt):
             print("target waypoint reached")
             break
 
+def process_planArr(connection, planArr, alt):
+    print("sending takeoff command")
+    takeoff(connection, alt)
+    for lat, lon in planArr:
+        print("Going to lat: %s lon: %s" % (lat, lon))
+        send_waypoint_global(connection, float(lat) * 1e7, float(lon) *1e7, alt)
+    land(connection)
+
 
 #Main code:
 root = tk.Tk()
 app = MVC.Controller(root)
 root.mainloop()
-planArr = MVC.Controller.planArr
+planArr = app.planArr
 
-# drone_connection = connect(14551)
+print("waypoints to visit:")
+print(planArr)
 
-# takeoff(drone_connection, 3)
-# msg = drone_connection.recv_match(type = 'GLOBAL_POSITION_INT', blocking = True) #wait for a message containing global position coordinates and grab the lat and lon of the takeoff location.
-# home_lat = msg.lat
-# home_lon = msg.lon
+drone_connection = connect(14551)
 
-# send_waypoint_global(drone_connection, -35.3628219 * 1e7, 149.1641168 * 1e7, 15) #send drone to a specified gps coordinate. each coordinate is multiplied by 10,000,000 to mach mavlink gps format
-# send_waypoint_global(drone_connection, home_lat, home_lon, 5) #go back to where we started
-
-# land(drone_connection)
+process_planArr(drone_connection, planArr, 10)

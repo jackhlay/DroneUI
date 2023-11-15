@@ -54,7 +54,7 @@ class View: #ugly view monolith
         self.longitude_entry2 = tk.Entry(root)
         self.longitude_entry2.grid(row=6, column=1, columnspan=2, sticky="w")
 
-        self.generate_button = tk.Button(root, text="Generate Plan", command=controller.generate_plan)
+        self.generate_button = tk.Button(root, text="Fly", command=controller.generate_plan)
         self.generate_button.grid(row=7, column=1, columnspan=2, sticky="w")
 
         # Expand all columns and rows
@@ -89,8 +89,11 @@ class Controller:
         self.planArr.extend(self.model.coordinates)
         self.planArr.append(takeOffCoords)
         self.view.result_label.configure(text="Plan generated!")
-        print(self.planArr)
+        #print(self.planArr)
+        self.view.root.destroy()
         return self.planArr
+    
+
 
 if __name__ == "__main__":
     root = tk.Tk()
