@@ -1,5 +1,7 @@
 from pymavlink import mavutil
 import math
+import tkinter as tk
+import MVC
 
 def get_distance_global(current_lat, current_lon, target_lat, target_lon):
     #return the distance between current position and target position in centimeters
@@ -82,14 +84,19 @@ def send_waypoint_global(connection, lat, lon, alt):
 
 
 #Main code:
-drone_connection = connect(14551)
+root = tk.Tk()
+app = MVC.Controller(root)
+root.mainloop();
 
-takeoff(drone_connection, 3)
-msg = drone_connection.recv_match(type = 'GLOBAL_POSITION_INT', blocking = True) #wait for a message containing global position coordinates and grab the lat and lon of the takeoff location.
-home_lat = msg.lat
-home_lon = msg.lon
 
-send_waypoint_global(drone_connection, -35.3628219 * 1e7, 149.1641168 * 1e7, 15) #send drone to a specified gps coordinate. each coordinate is multiplied by 10,000,000 to mach mavlink gps format
-send_waypoint_global(drone_connection, home_lat, home_lon, 5) #go back to where we started
+# drone_connection = connect(14551)
 
-land(drone_connection)
+# takeoff(drone_connection, 3)
+# msg = drone_connection.recv_match(type = 'GLOBAL_POSITION_INT', blocking = True) #wait for a message containing global position coordinates and grab the lat and lon of the takeoff location.
+# home_lat = msg.lat
+# home_lon = msg.lon
+
+# send_waypoint_global(drone_connection, -35.3628219 * 1e7, 149.1641168 * 1e7, 15) #send drone to a specified gps coordinate. each coordinate is multiplied by 10,000,000 to mach mavlink gps format
+# send_waypoint_global(drone_connection, home_lat, home_lon, 5) #go back to where we started
+
+# land(drone_connection)
