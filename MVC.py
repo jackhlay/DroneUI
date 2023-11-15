@@ -67,6 +67,7 @@ class View: #ugly view monolith
 
 class Controller:
     def __init__(self, root):
+        self.planArr = []
         self.model = Model()
         self.view = View(root, self)
 
@@ -81,15 +82,15 @@ class Controller:
             self.view.result_label.configure(text="Please enter both coordinates")
             
     def generate_plan(self):
-        planArr = []
         toLat = self.view.latitude_entry.get()
         toLong = self.view.longitude_entry.get()
         takeOffCoords = (toLat, toLong)
-        planArr.append(takeOffCoords)
-        planArr.extend(self.model.coordinates)
-        planArr.append(takeOffCoords)
+        self.planArr.append(takeOffCoords)
+        self.planArr.extend(self.model.coordinates)
+        self.planArr.append(takeOffCoords)
         self.view.result_label.configure(text="Plan generated!")
-        print(planArr)
+        print(self.planArr)
+        return self.planArr
 
 if __name__ == "__main__":
     root = tk.Tk()

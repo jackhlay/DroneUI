@@ -86,8 +86,8 @@ def send_waypoint_global(connection, lat, lon, alt):
 #Main code:
 root = tk.Tk()
 app = MVC.Controller(root)
-root.mainloop();
-
+root.mainloop()
+planArr = MVC.Controller.planArr
 
 # drone_connection = connect(14551)
 
