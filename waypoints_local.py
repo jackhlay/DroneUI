@@ -1,7 +1,9 @@
 from pymavlink import mavutil
-import math
 import tkinter as tk
+import transformations as tf
 import MVC
+import pygame
+import time
 
 def get_distance_global(current_lat, current_lon, target_lat, target_lon):
     #return the distance between current position and target position in centimeters
@@ -119,17 +121,72 @@ def process_planArr(connection, planArr, alt):
     land(connection)
 
 
-#Main code:
+# Function to get PS5 controller input
+def get_controller_input():
+    pygame.init()
+    pygame.joystick.init()
 
-drone_connection = connect(14551) #udp connection to ardupilot
+    if pygame.joystick.get_count() == 0:
+        print("No controller detected. Please connect a PS5 controller.")
+        return None
 
-takeoff(drone_connection, 2)
+    controller = pygame.joystick.Joystick(0)
+    controller.init()
 
-send_waypoint_local(drone_connection, 3, 5, -7)
-send_waypoint_local(drone_connection, -6, 12, -7)
-send_waypoint_local(drone_connection, -4, 1, -3)
-send_waypoint_local(drone_connection, 5, 3, -1)
-send_waypoint_local(drone_connection, -6, -3, -4)
-send_waypoint_local(drone_connection, 0, 0, -3)
+    while True:
+        pygame.event.get()
 
+        # Get controller input
+        # Input number meanings: 0: Right stick L/R 1: Left Stick Up/Down 2: Left Trigger 3:Right Stick L/R 4:Right Stick up/down
+        yaw = controller.get_axis(0)  # PS5 left stick horizontal axis
+        throttle = -1*controller.get_axis(1)  # PS5 left stick vertical axis
+        pitch = controller.get_axis(4)  # PS5 right stick vertical axis
+        roll = controller.get_axis(3)  # PS5 right stick horizontal axis
+        yaw_rate = 1 #controller.get_axis(4)  # Additional axis for yaw rate control
+
+        print(f"\n ,Roll: {roll}\n, Pitch: {pitch}\n, Throttle: {throttle}\n, Yaw: {yaw}\n")
+
+
+        return roll, pitch, throttle, yaw, yaw_rate
+
+# Function to control the drone in real-time using PS5 controller input
+def control_drone_real_time(connection):
+    duration = 200
+    while True:
+        # Get PS5 controller input
+        roll_angle, pitch_angle, thrust, yaw_angle, _ = get_controller_input()
+        # print(f"Controller Input - Roll: {roll}, Pitch: {pitch}, Throttle: {throttle}, Yaw: {yaw}, Yaw Rate: {yaw_rate}")
+        try:
+            q = tf.quaternion_from_euler(roll_angle, pitch_angle, yaw_angle)
+
+            # Send SET_ATTITUDE_TARGET message
+            connection.mav.set_attitude_target_send(
+                0,  # time_boot_ms
+                connection.target_system,
+                connection.target_component,
+                0b00000000,  # Type mask
+                q,  # Quaternion
+                0, 0, 0,  # Body roll, pitch, yaw rate
+                thrust  # Thrust
+            )
+            
+            # Hold the attitude for the specified duration
+            if duration > 0:
+                time.sleep(duration / 1000.0)
+                    
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print("NOT WORKING")
+
+
+# Main code:
+drone_connection = connect(14550)  # udp connection to ardupilot (must use 50)
+
+# takeoff(drone_connection, 2)
+
+# Use the PS5 controller for real-time drone control
+control_drone_real_time(drone_connection)
+
+# Land the drone when finished
 land(drone_connection)
