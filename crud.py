@@ -5,14 +5,14 @@ class CRUD:
         self.root = root
         self.root.title("bruh test")
 
-        self.list = tk.Listbox(self.root, selectmode=tk.SINGLE)
-        self.list.pack(pady=10)
+        self.vList = tk.Listbox(self.root, selectmode=tk.SINGLE)
+        self.vList.pack(pady=10)
 
         self.entru = tk.Entry(root)
         self.entru.pack(pady = 3)
 
         self.addButton = tk.Button(root, text="Add", command=lambda: self.add(self.entru.get())).pack(pady=5)
-        self.removeButton = tk.Button(root, text="Remove", command=self.remove()).pack(pady=5)
+        self.removeButton = tk.Button(root, text="Remove", command=self.remove).pack(pady=5)
 
 
     def getRoot(self):
@@ -20,12 +20,12 @@ class CRUD:
 
 
     def add(self, item):
-        self.list.insert(tk.END, item)
+        self.vList.insert(tk.END, item)
+        self.entru.delete(0, tk.END)  # clears entry box after adding item to vListbox
 
     def remove(self):
-        selected= self.list.curselection()
-        if selected:
-            self.list.delete(selected)
+        print("selected: ", self.vList.curselection()[0])
+        self.vList.delete(self.vList.curselection()[0])
 
 if __name__ == "__main__":
     root = tk.Tk()
