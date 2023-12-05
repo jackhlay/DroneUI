@@ -177,14 +177,14 @@ def process_planArr(connection, planArr, alt):
 drone_connection = connect(14550) #udp connection to ardupilot
 
 #set copter to guided mode
-drone_connection.mav.set_mode_send(drone_connection.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 4) 
+#drone_connection.mav.set_mode_send(drone_connection.target_system, mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 4) 
 
 #arm throttle
-drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
-                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
+#drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
+#                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
 
-msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
-print(msg) #"result: 0" if it executed without error. If you get result: 4, you probably need to set the copter to guided mode.
+#msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
+#print(msg) #"result: 0" if it executed without error. If you get result: 4, you probably need to set the copter to guided mode.
 
 #takeoff(drone_connection, 3)
 
@@ -207,21 +207,11 @@ try:
     while True:
         pygame.event.pump()
         
-        # Joystick axes
+        # Joystick axes Normalized to -1000 to 1000
         left_joystick_x = int(joystick.get_axis(0)*1000)
         left_joystick_y = int(joystick.get_axis(1)*1000)
         right_joystick_x = int(joystick.get_axis(2)*1000)
         right_joystick_y = int(joystick.get_axis(3)*1000)
-
-        # Clamp the values to ensure they are within the acceptable range
-        #left_joystick_x = float(max(-1, min(1, left_joystick_x)))
-        #left_joystick_y = float(max(-1, min(1, left_joystick_y)))
-        #right_joystick_x = float(max(-1, min(1, right_joystick_x)))
-        #right_joystick_y = float(max(-1, min(1, right_joystick_y)))
-
-        # Convert throttle input from -1000 to 1000 range to 0 to 1000
-        throttle = int((left_joystick_y + 1) * 1.505)  # Scale and shift to 0 to 1000
-        throttle = float(max(-3.14, min(3.14, throttle)))  # Clamp throttle
 
         print("yaw ",left_joystick_x)
         print("pitch ",right_joystick_y)
@@ -230,13 +220,51 @@ try:
         buttons = 0
         send_manual_control(drone_connection, 0, 0, left_joystick_y*-1, 0, buttons)
 
+        duration = 10;
+
+        #Hold the attitude for the specified duration
+        if duration > 0:
+            time.sleep(duration / 1000.0)
+
         for event in pygame.event.get():
-            if event.type == pygame.CONTROLLER_BUTTON_DPAD_UP: 
-                print("attempting to disarm")
-                drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
-                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
-                msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
-                print(msg) #"result: 0" if it executed without error. If you get result: 4, you probably need to set the copter to guided mode.
+            if event.type == pygame.JOYBUTTONDOWN: 
+                if event.button == 0:
+                    print("Square button pressed")
+                elif event.button == 1:
+                    print("X button pressed")
+                    drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
+                    msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
+                    print(msg) #"result: 0" if it executed without error. If you get result: 4, you probably need to set the copter to guided mode.
+                elif event.button == 2:
+                    print("O button pressed")
+                    drone_connection.mav.command_long_send(
+                    drone_connection.target_system, 
+                    drone_connection.target_component,
+                    mavutil.mavlink.MAV_CMD_DO_SET_MODE, 
+                    0,  # Confirmation
+                    mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+                    0,  # Stabilize mode number, adjust if different for your FC
+                    0, 0, 0, 0, 0  # Unused parameters
+                    )
+                    # Wait for ACK message
+                    msg = drone_connection.recv_match(type='COMMAND_ACK', blocking=True)
+                    print(msg)  # "result: 0" indicates successful execution.
+                elif event.button == 3:
+                    print("Triangle button pressed")
+                    # Send command to arm the drone
+                    drone_connection.mav.command_long_send(
+                    drone_connection.target_system, 
+                    drone_connection.target_component,
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+                    0,  # Confirmation
+                    1,  # Arm
+                    0, 0, 0, 0, 0, 0  # Unused parameters
+                    )
+                    # Wait for ACK message
+                    msg = drone_connection.recv_match(type='COMMAND_ACK', blocking=True)
+                    print(msg)  # "result: 0" indicates successful execution. "result: 4" suggests a possible requirement to set the copter to guided mode.
+                
             
 
 
