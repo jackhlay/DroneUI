@@ -24,23 +24,34 @@ class View: #ugly view monolith
             print(self.address_entry.get())
             self.map_view.set_address(self.address_entry.get())
 
-
+        def remove():
+            print("selected: ", self.vList.curselection()[0])
+            self.vList.delete(self.vList.curselection()[0])
 
         # Configure column and row weights for centerin
 
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
+        self.vList = tk.Listbox(self.root, selectmode=tk.SINGLE)
+        self.vList.grid(row=2, column=0, columnspan=3, sticky="e")
+
+        self.entry = tk.Entry(root)
+
+        self.removeButton = tk.Button(root, text="Remove", command=remove)
+        self.removeButton.grid(row=3, column=0, columnspan=3, sticky="e")
+
         self.address_label = tk.Label(root, text="Address")
-        self.address_label.grid(row=0, column=0, sticky="w")
+        self.address_label.grid(row=1, column=0, sticky="w")
 
         self.address_entry = tk.Entry(root)
-        self.address_entry.grid(row=0, column=1, columnspan=2, sticky="w")
+        self.address_entry.grid(row=1, column=1, columnspan=3, sticky="w")
 
         self.add_button = tk.Button(root, text="enter", command=center_map)
-        self.add_button.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.add_button.grid(row=1, column =3, columnspan=1, sticky="nesw")
+
         self.result_label = tk.Label(root, text="")
-        self.result_label.grid(row=1, column=1, columnspan=2)
+        self.result_label.grid(row=1, column=1, columnspan=2, sticky = "w")
 
         self.generate_button = tk.Button(root, text="Fly", command=controller.generate_plan)
         self.generate_button.grid(row=7, column=1, columnspan=2, sticky="w")
@@ -51,6 +62,7 @@ class View: #ugly view monolith
 
         def add_coords(coords):
             print("Added coords:", coords)
+            self.vList.insert(tk.END, coords)
             self.controller.add_coordinates(coords[0], coords[1])
             new_marker = self.map_view.set_marker(coords[0], coords[1], text="")
     
@@ -64,6 +76,7 @@ class View: #ugly view monolith
         for i in range(3):
             self.root.columnconfigure(i, weight=1)
 
+        
  
 
 
