@@ -1,12 +1,21 @@
 import tkinter as tk
 from tkintermapview import TkinterMapView
 
-class Model:
+class Model():
     def __init__(self):
         self.coordinates = []
+        self.observers = []
 
     def add_coordinate(self, latitude, longitude):
         self.coordinates.append((latitude, longitude))
+        self.notify_observers()
+
+    def register_observer(self, observer):
+        self.observers.append(observer)
+
+    def notify_observers(self):
+        for observer in self.observers:
+            observer.update_view(self.coordinates)
 
     def generate_plan(self):
         print("Generating plan with coordinates:", self.coordinates)
@@ -16,6 +25,7 @@ class View: #ugly view monolith
     def __init__(self, root, controller):
         self.root = root
         self.controller = controller
+        self.controller.model.register_observer(self)
         self.root.geometry("360x480")  # Initial size, adjust as needed
         self.root.title("Coordinate App")
         self.root.resizable(width=False, height=False)
@@ -51,7 +61,7 @@ class View: #ugly view monolith
         self.add_button.grid(row=1, column =3, columnspan=1, sticky="nesw")
 
         self.result_label = tk.Label(root, text="")
-        self.result_label.grid(row=1, column=1, columnspan=2, sticky = "w")
+        self.result_label.grid(row=3, column=0, columnspan=2, sticky = "nesw")
 
         self.generate_button = tk.Button(root, text="Fly", command=controller.generate_plan)
         self.generate_button.grid(row=7, column=1, columnspan=2, sticky="w")
@@ -76,9 +86,10 @@ class View: #ugly view monolith
         for i in range(3):
             self.root.columnconfigure(i, weight=1)
 
-        
- 
-
+    def update_view(self, coordinates):
+        self.vList.delete(0, tk.END)  # Clear the Listbox
+        for coord in coordinates:
+            self.vList.insert(tk.END, coord)
 
 class Controller:
 
@@ -98,12 +109,10 @@ class Controller:
     
     def fly_button_pressed(self):
         self.generate_plan()
-        self.root.destroy
-
-
-        
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = Controller(root)
     root.mainloop()
+    root.quit()
