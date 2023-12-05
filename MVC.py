@@ -67,7 +67,7 @@ class View: #ugly view monolith
         self.generate_button.grid(row=7, column=1, columnspan=2, sticky="w")
 
         self.map_view = TkinterMapView(root, width=360, height=250, corner_radius=0)
-        self.map_view.grid(row=8, column=0, columnspan=3, sticky="nsew")
+        self.map_view.grid(row=8, columnspan=4, sticky="nsew")
         self.map_view.set_zoom(20)
 
         def add_coords(coords):
