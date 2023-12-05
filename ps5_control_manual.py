@@ -1,3 +1,4 @@
+from pickletools import float8
 from pymavlink import mavutil
 import math
 import tkinter as tk
@@ -122,29 +123,40 @@ def euler_to_quaternion(roll, pitch, yaw):
     
     return quaternion
 
-def send_manual_control(connection, x, y, z, r):
-# Convert angles to quaternions
+def send_manual_control(connection, x, y, z, r, buttons=0):
+    """
+    Send a MANUAL_CONTROL command to the drone.
 
-    q = euler_to_quaternion(x,y,r)
-    #print("quaternion: ", q)
-    #print("r: ", r)
-    r_scaled = max(-3.14, min(3.14, r))
+    Parameters:
+    - connection: The MAVLink connection object.
+    - x: The x-axis value (pitch), normalized from -1000 to 1000.
+    - y: The y-axis value (roll), normalized from -1000 to 1000.
+    - z: The z-axis value (throttle), normalized from 0 to 1000.
+    - r: The r-axis value (yaw), normalized from -1000 to 1000.
+    - buttons: Bitmask of buttons pressed (default to 0).
+    """
 
-    # Send SET_ATTITUDE_TARGET message
+    # Ensure the values are within the acceptable range
+    x = int(max(-1000, min(1000, x)))
+    y = int(max(-1000, min(1000, y)))
+    z = int(max(-1000, min(1000, z)))
+    r = int(max(-1000, min(1000, r)))
+    
+    print(x,y,z,r)
 
-    connection.mav.set_attitude_target_send(
-        0,  # time_boot_ms
+    # Send the MANUAL_CONTROL message
+    connection.mav.manual_control_send(
         connection.target_system,
-        connection.target_component,
-        0b00000000,  # Type mask
-        q,  # Quaternion
-        0, 0, r_scaled,  # Body roll, pitch, yaw rate
-        z  # Thrust
+        x,   # Pitch
+        y,   # Roll
+        z,   # Throttle
+        r,   # Yaw
+        buttons
     )
-
+    
     duration = 10;
 
-    # Hold the attitude for the specified duration
+    #Hold the attitude for the specified duration
     if duration > 0:
         time.sleep(duration / 1000.0)
 
@@ -196,29 +208,31 @@ try:
         pygame.event.pump()
         
         # Joystick axes
-        left_joystick_x = int(joystick.get_axis(0) * 50)
-        left_joystick_y = int(joystick.get_axis(1) * 50)
-        right_joystick_x = int(joystick.get_axis(2) * 50)
-        right_joystick_y = int(joystick.get_axis(3) * 50)
+        left_joystick_x = int(joystick.get_axis(0)*1000)
+        left_joystick_y = int(joystick.get_axis(1)*1000)
+        right_joystick_x = int(joystick.get_axis(2)*1000)
+        right_joystick_y = int(joystick.get_axis(3)*1000)
 
         # Clamp the values to ensure they are within the acceptable range
-        left_joystick_x = max(-50, min(50, left_joystick_x))
-        left_joystick_y = max(-50, min(50, left_joystick_y))
-        right_joystick_x = max(-50, min(50, right_joystick_x))
-        right_joystick_y = max(-50, min(50, right_joystick_y))
+        #left_joystick_x = float(max(-1, min(1, left_joystick_x)))
+        #left_joystick_y = float(max(-1, min(1, left_joystick_y)))
+        #right_joystick_x = float(max(-1, min(1, right_joystick_x)))
+        #right_joystick_y = float(max(-1, min(1, right_joystick_y)))
 
         # Convert throttle input from -1000 to 1000 range to 0 to 1000
         throttle = int((left_joystick_y + 1) * 1.505)  # Scale and shift to 0 to 1000
-        throttle = max(-3.14, min(3.14, throttle))  # Clamp throttle
+        throttle = float(max(-3.14, min(3.14, throttle)))  # Clamp throttle
 
-        #print("yaw %d",left_joystick_x)
-        #print("pitch %d",right_joystick_y)
-        #print("roll %d",right_joystick_x)
-
-        send_manual_control(drone_connection, right_joystick_x, right_joystick_y*-1, throttle*-1, left_joystick_x)
+        print("yaw ",left_joystick_x)
+        print("pitch ",right_joystick_y)
+        print("roll ",right_joystick_x*-1)
+        print("throttle", left_joystick_y*-1)
+        buttons = 0
+        send_manual_control(drone_connection, 0, 0, left_joystick_y*-1, 0, buttons)
 
         for event in pygame.event.get():
-            if event.type == pygame.CONTROLLER_BUTTON_DPAD_UP:         
+            if event.type == pygame.CONTROLLER_BUTTON_DPAD_UP: 
+                print("attempting to disarm")
                 drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
                 msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
