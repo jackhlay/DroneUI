@@ -170,6 +170,26 @@ def process_planArr(connection, planArr, alt):
             send_waypoint_local(connection, float(lat) , float(lon) , alt)
     land(connection)
 
+ #scaling control max/mins for easy indoor flight. 
+def indoor_flight_mode_gimbal_values():
+    throttle_max = 500
+    left_joystick_x = int(joystick.get_axis(0)*650)
+    left_joystick_y = int(joystick.get_axis(1)*500)
+    #right_joystick_x = int(joystick.get_axis(2)*650)
+    right_joystick_x = int(((throttle_max/2)*joystick.get_axis(2))+(throttle_max/2))
+    right_joystick_y = int(joystick.get_axis(3)*650)
+    
+    return [left_joystick_x,left_joystick_y,right_joystick_x,right_joystick_y]
+
+def full_power_mode_gimbal_values():
+    left_joystick_x = int(joystick.get_axis(0)*1000)
+    left_joystick_y = int(joystick.get_axis(1)*1000)
+    right_joystick_x = int(joystick.get_axis(2)*1000)
+    right_joystick_y = int(joystick.get_axis(3)*1000)
+    
+    return [left_joystick_x,left_joystick_y,right_joystick_x,right_joystick_y]
+
+
 
 #Main code:
 #set copter to guided mode
@@ -203,25 +223,28 @@ joystick = pygame.joystick.Joystick(0)
 
 joystick.init()
 
+mode = "indoor"
+
 try:
     while True:
         pygame.event.pump()
         
-        # Joystick axes Normalized to -1000 to 1000
-        left_joystick_x = int(joystick.get_axis(0)*1000)
-        left_joystick_y = int(joystick.get_axis(1)*1000)
-        right_joystick_x = int(joystick.get_axis(2)*1000)
-        right_joystick_y = int(joystick.get_axis(3)*1000)
+        
+        if mode == "indoor":
+            left_joystick_x, left_joystick_y, right_joystick_x, right_joystick_y = indoor_flight_mode_gimbal_values()
+
+        elif mode == "power":
+            left_joystick_x, left_joystick_y, right_joystick_x, right_joystick_y = full_power_mode_gimbal_values()
 
         print("yaw ",left_joystick_x)
         print("pitch ",right_joystick_y)
         print("roll ",right_joystick_x*-1)
         print("throttle", left_joystick_y*-1)
         buttons = 0
-        send_manual_control(drone_connection, 0, 0, left_joystick_y*-1, 0, buttons)
+        send_manual_control(drone_connection, right_joystick_y, right_joystick_x, left_joystick_y*-1, left_joystick_x, buttons)
 
         duration = 10;
-
+        
         #Hold the attitude for the specified duration
         if duration > 0:
             time.sleep(duration / 1000.0)
@@ -229,15 +252,15 @@ try:
         for event in pygame.event.get():
             if event.type == pygame.JOYBUTTONDOWN: 
                 if event.button == 0:
-                    print("Square button pressed")
-                elif event.button == 1:
-                    print("X button pressed")
+                    print("X button Pressed")
                     drone_connection.mav.command_long_send(drone_connection.target_system, drone_connection.target_component, 
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0)
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0)
                     msg = drone_connection.recv_match(type = 'COMMAND_ACK', blocking = True)
                     print(msg) #"result: 0" if it executed without error. If you get result: 4, you probably need to set the copter to guided mode.
-                elif event.button == 2:
+                elif event.button == 1:
                     print("O button pressed")
+                elif event.button == 2:
+                    print("Square button pressed")
                     drone_connection.mav.command_long_send(
                     drone_connection.target_system, 
                     drone_connection.target_component,
@@ -264,7 +287,7 @@ try:
                     # Wait for ACK message
                     msg = drone_connection.recv_match(type='COMMAND_ACK', blocking=True)
                     print(msg)  # "result: 0" indicates successful execution. "result: 4" suggests a possible requirement to set the copter to guided mode.
-                
+              
             
 
 
