@@ -6,25 +6,39 @@ import pytest
 from tkintermapview import TkinterMapView
 from PIL import Image, ImageTk
 import threading
+import time
 
 class Communication:
-    def get_distance_global(current_lat, current_lon, target_lat, target_lon):
+
+    target_lat = None
+    target_lon = None
+
+    def get_distance_global(current_lat, current_lon, t_lat, t_lon):
         #return the distance between current position and target position in centimeters
         #does not account for the curvature of the earth
 
-        delta_lat = target_lat - current_lat
-        delta_lon = target_lon - current_lon
+        delta_lat = t_lat - current_lat
+        delta_lon = t_lon - current_lon
         distance  = math.sqrt(delta_lat ** 2 + delta_lon ** 2) #formula for euclidean distance between 2 points
         return distance 
     
     def get_current_lat(connection):
         msg = connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
         return msg.lat
+    
     def get_current_lon(connection):
         msg = connection.recv_match(type='GLOBAL_POSITION_INT', blocking=True)
         return msg.lon
 
+    def get_current_distance(connection, lat, lon):
+        msg = connection.recv_match(type = 'GLOBAL_POSITION_INT', blocking = True)
 
+        current_lat = msg.lat 
+        current_lon = msg.lon
+
+        distance = Communication.get_distance_global(current_lat, current_lon, lat, lon)
+
+        return distance
 
     def connect(port):
         print("Attempting to connect on port %d" % port)
@@ -79,16 +93,12 @@ class Communication:
         i = 0
         while 1:
             i += 1
-            msg = connection.recv_match(type = 'GLOBAL_POSITION_INT', blocking = True)
+            
+            distance = Communication.get_current_distance(connection, lat, lon)
 
-            current_lat = msg.lat 
-            current_lon = msg.lon
+            #print("Current distance %d" % distance)
 
-            distance = Communication.get_distance_global(current_lat, current_lon, lat, lon)
-
-            print("Current distance %d" % distance)
-
-            if(distance <= 25): #break when we are within 50 cm of target
+            if(distance <= 25): #break when we are within 25 cm of target
                 print("target waypoint reached")
                 break
 
@@ -107,6 +117,8 @@ class Communication:
         Communication.takeoff(connection, alt)
         for lat, lon in planArr:
             print("Going to lat: %s lon: %s" % (lat, lon))
+            Communication.target_lat = lat
+            Communication.target_lon = lon
             Communication.send_waypoint_global(connection, float(lat) *1e7, float(lon) *1e7, alt)
 
     def isInRange(takeoff_lat, takeoff_lon, target_lat, target_lon):
@@ -205,7 +217,7 @@ class View: #ugly view monolith
         self.distance_label = tk.Label(root, text="Distance: N/A")
         self.distance_label.grid(row=7, column=0, columnspan=2, sticky="w")
 
-        self.next_button = tk.Button(root, text="next waypoint")
+        self.next_button = tk.Button(root, text="next waypoint", command=controller.next_button_pressed)
         self.next_button.grid(row=7, column=1, columnspan=2, sticky="w")
 
         self.map_view = TkinterMapView(root, width=360, height=250, corner_radius=3)
@@ -245,12 +257,24 @@ class View: #ugly view monolith
 
         self.root.after(1000, lambda: self.update_map(connection))
 
+    def update_distance_label(self, distance):
+        self.distance_label.config(text="distance: " + str(distance))
+        self.root.after(1000, self.check_update_distance)  # Schedule to check for distance update
+
+    def check_update_distance(self):
+        if self.controller.update_needed:
+            self.update_distance_label(self.controller.current_distance)
+
+            
+        
+
 class Controller:
 
     def __init__(self, root):
         self.planArr = []
         self.model = Model()
         self.view = View(root, self)
+
 
     def add_coordinates(self, lat, lon):
         self.model.add_coordinate(lat, lon)
@@ -273,6 +297,7 @@ class Controller:
         drone_thread.start()
 
         self.root.destroy()
+
 
 
     def start_drone_operations(self, connection):
