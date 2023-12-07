@@ -1,6 +1,21 @@
 import tkinter as tk
 from tkintermapview import TkinterMapView
 
+class SingletonRoot(tk.Tk):
+    _instance = None #static my instance singleton
+
+    def __new__(cls): #instantiating/checking for existing instance
+        if cls._instance is None:
+            cls._instance = super(SingletonRoot, cls).__new__(cls)
+        return cls._instance
+
+    def initialize(self): #making new instance
+        if not hasattr(self, '_initialized'):
+            self._initialized = True
+            self.geometry("360x480")
+            self.title("Coordinate App")
+            self.resizable(width=False, height=False)
+
 class Model():
     def __init__(self):
         self.coordinates = []
@@ -112,7 +127,7 @@ class Controller:
         self.root.destroy()
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = SingletonRoot()
     app = Controller(root)
     root.mainloop()
     root.quit()
