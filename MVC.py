@@ -265,9 +265,6 @@ class View: #ugly view monolith
         if self.controller.update_needed:
             self.update_distance_label(self.controller.current_distance)
 
-            
-        
-
 class Controller:
 
     def __init__(self, root):
