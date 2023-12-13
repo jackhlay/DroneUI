@@ -32,23 +32,23 @@ def test_notify_observers(mock_observer):
     model.add_coordinate(1, 2)
     mock_observer.update_view.assert_called_once_with([(1, 2)])
 
-def test_generate_plan(): #failing
+def test_generate_plan(): #we do not use this generate_plan function, so easy free test
     model = Model()
     model.add_coordinate(1, 2)
     model.add_coordinate(3, 4)
     assert model.generate_plan() == None
 
-def test_generate_plan_empty():
+def test_generate_plan_empty(): #consistency
     model = Model()
     assert model.generate_plan() == None
 
-def test_notify_observers_empty(mock_observer):
+def test_notify_observers_empty(mock_observer): 
     model = Model()
     model.register_observer(mock_observer)
     model.notify_observers()
     mock_observer.update_view.assert_called_once_with([])
 
-def test_add_same_coordinate(): #failing
+def test_add_same_coordinate(): #you are allowed to add the same coordinate as many times as you want
     model = Model()
     model.add_coordinate(1, 2)
     model.add_coordinate(1, 2)
