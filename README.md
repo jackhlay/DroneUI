@@ -63,7 +63,16 @@ Acts as an intermediary between the View and Model, handling user inputs and upd
 - Starts the Tkinter main loop.
 
 ## Usage
+#### With Gazebo and ArdupilotSITL:
+Gazebo is a free open source physics engine designed for testing automated systems. You can create custom world files that contain 3d models for the automated entities, moving parts, and the environment. 
+ArdupilotSITL is an softare implementation of a flight controller running ArduPilot. It handles control of the drone using its current orientation in the simulated environment. 
+Using Ardupilot SITL with Gazebo allows us to test the behavior of our software without the risk of damaging real hardware. 
 
+- Start Gazebo
+  - gazebo --verbose ~/path/to/world/file
+- Start ArduPilot SITL
+  - sim_vehicle_script.py -v ArduCopter -f gazebo -drone_model_file -L WORLD_LOCATION_COORDINATES --console --out <\ip and port # of computer running the Spot On script. or nothing if you are using the same computer>
+  - The spot on script currently accepts a connection from any ip on the network on port 14550.
 - Run the script to start the application.
 - Enter an address in the address bar to center the map view on the desired location.
 - Right click on the locations where property markers will be placed, select 'add coordinates' from the drop down.
